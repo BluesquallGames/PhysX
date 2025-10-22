@@ -120,7 +120,7 @@ class CMakePreset:
             return False
         elif self.targetPlatform == 'android':
             return False
-        if self.targetPlatform == 'emscripten':
+        elif self.targetPlatform == 'emscripten':
             return False
         return True
 
@@ -159,6 +159,8 @@ class CMakePreset:
             outString = outString + '-G \"Visual Studio 15 2017\"'
         elif self.compiler == 'vc16':
             outString = outString + '-G \"Visual Studio 16 2019\"'
+        elif self.compiler == 'vc17':
+            outString = outString + '-G \"Visual Studio 17 2022\"'
         elif self.compiler == 'xcode':
             outString = outString + '-G Xcode'
         elif self.targetPlatform == 'android':
@@ -329,8 +331,15 @@ class CMakePreset:
         elif self.targetPlatform == 'emscripten':
             outString = outString + '-G \"Ninja\"'
             outString = outString + ' -DTARGET_BUILD_PLATFORM=emscripten'
+            emscripten_dir = None
+            if "EMSDK" in os.environ:
+                emscripten_dir = os.path.join(os.environ["EMSDK"], "upstream", "emscripten")
+            elif "EMSCRIPTEN" in os.environ:
+                emscripten_dir = os.environ["EMSCRIPTEN"]
+            else:
+              print("EMSCRIPTEN/EMSDK environment variable is not available. Please properly activate Emscripten SDK and consider using 'emcmake' launcher")
             outString = outString + ' -DCMAKE_TOOLCHAIN_FILE=\"' + \
-                os.path.join(os.environ['EMSCRIPTEN'] + '/cmake/Modules/Platform/Emscripten.cmake\"')
+                os.path.join(emscripten_dir, 'cmake/Modules/Platform/Emscripten.cmake\"')
             return outString
         return ''
 

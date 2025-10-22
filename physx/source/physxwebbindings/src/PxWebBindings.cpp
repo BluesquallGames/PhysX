@@ -84,7 +84,7 @@ struct PxQueryFilterCallbackWrapper : public wrapper<PxQueryFilterCallback> {
   EMSCRIPTEN_WRAPPER(PxQueryFilterCallbackWrapper)
   PxQueryHitType::Enum postFilter(const PxFilterData &filterData,
                                   const PxQueryHit &hit) {
-    return call<PxQueryHitType::Enum>("postFilter", filterData, &hit);
+    return call<PxQueryHitType::Enum>("postFilter", filterData, const_cast<PxQueryHit*>(&hit));
   }
   PxQueryHitType::Enum preFilter(const PxFilterData &filterData,
                                  const PxShape *shape,
@@ -98,7 +98,9 @@ struct PxQueryFilterCallbackWrapper : public wrapper<PxQueryFilterCallback> {
 
     // NOTE: out parameter is not supported and it's not used in cocos.
     // And to avoid memory leak of `PxHitFlags` object, just don't pass the parameter to JS.
-    PxQueryHitType::Enum hitType = call<PxQueryHitType::Enum>("preFilter", filterData, shape, actor/*, &out */);
+    auto pShape = const_cast<PxShape*>(shape);
+    auto pActor = const_cast<PxRigidActor*>(actor);
+    PxQueryHitType::Enum hitType = call<PxQueryHitType::Enum>("preFilter", filterData, pShape, pActor/*, &out */);
     return hitType;
   }
 };
@@ -417,13 +419,13 @@ struct PxUserControllerHitReportWrapper
     : public wrapper<PxUserControllerHitReport> {
   EMSCRIPTEN_WRAPPER(PxUserControllerHitReportWrapper)
   void onShapeHit(const PxControllerShapeHit &hit) {
-    return call<void>("onShapeHit", &hit);
+    return call<void>("onShapeHit", const_cast<PxControllerShapeHit*>(&hit));
   }
   void onControllerHit(const PxControllersHit &hit) {
-    return call<void>("onControllerHit", &hit);
+    return call<void>("onControllerHit", const_cast<PxControllersHit*>(&hit));
   }
   void onObstacleHit(const PxControllerObstacleHit &hit) {
-    return call<void>("onObstacleHit", &hit);
+    return call<void>("onObstacleHit", const_cast<PxControllerObstacleHit*>(&hit));
   }
 };
 
