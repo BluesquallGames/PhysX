@@ -98,25 +98,12 @@ Operating system defines, see http://sourceforge.net/p/predef/wiki/OperatingSyst
 #define PX_WIN32 1
 #elif defined(__ANDROID__)
 #define PX_ANDROID 1
-#elif defined(__OPENHARMONY__)
-#define PX_ANDROID 1
-#define PX_OPENHARMONY 1
 #elif defined(__linux__) || defined (__EMSCRIPTEN__) // note: __ANDROID__ implies __linux__
 #define PX_LINUX 1
+#elif defined(__APPLE__) && (defined(__arm__) || defined(__arm64__))
+#define PX_IOS 1
 #elif defined(__APPLE__)
-	#include <TargetConditionals.h>
-	#if TARGET_OS_IPHONE && TARGET_OS_MACCATALYST
-		#define PX_OSX 1
-	#elif TARGET_OS_IPHONE || TARGET_OS_SIMULATOR
-		#define PX_IOS 1
-		#ifdef TARGET_OS_SIMULATOR
-			#define PX_IOS_SIMULATOR 1
-		#else
-			#define PX_IOS_SIMULATOR 0
-		#endif
-	#else
-		#define PX_OSX 1
-	#endif
+#define PX_OSX 1
 #elif defined(__ORBIS__)
 #define PX_PS4 1
 #elif defined(__NX__)
@@ -183,9 +170,6 @@ define anything not defined on this platform to 0
 #endif
 #ifndef PX_ANDROID
 #define PX_ANDROID 0
-#endif
-#ifndef PX_OPENHARMONY
-#define PX_OPENHARMONY 0
 #endif
 #ifndef PX_LINUX
 #define PX_LINUX 0

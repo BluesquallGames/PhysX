@@ -3577,14 +3577,9 @@ PX_FORCE_INLINE Vec4V V4SplatElement(Vec4V a)
 		return vdupq_lane_f32(vget_low_f32(a), 1);
 	}
 #else
-	//fix compile err : https://github.com/EmbarkStudios/PhysX/commit/dc5059fb1acbf6a710c50f538b727a851c2d1139
-	if(index == 0)
+	if(index < 2)
 	{
-		return vdupq_lane_f32(vget_low_f32(a), 0);
-	}
-	else if(index == 1)
-	{
-		return vdupq_lane_f32(vget_low_f32(a), 1);
+		return vdupq_lane_f32(vget_low_f32(a), index);
 	}
 #endif
 	else if(index == 2)

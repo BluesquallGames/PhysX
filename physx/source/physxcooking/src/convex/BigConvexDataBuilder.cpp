@@ -87,7 +87,7 @@ bool BigConvexDataBuilder::save(PxOutputStream& stream, bool platformMismatch) c
 	if(!WriteHeader('G', 'A', 'U', 'S', gVersion, platformMismatch, stream))
 		return false;
 
-	// Export basic info
+		// Export basic info
 	//	stream.StoreDword(mSubdiv);
 	writeDword(mSVM->mData.mSubdiv, platformMismatch, stream);		// PT: could now write Word here
 	//	stream.StoreDword(mNbSamples);

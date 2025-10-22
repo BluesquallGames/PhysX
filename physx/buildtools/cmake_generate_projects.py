@@ -1,5 +1,4 @@
 import sys
-import platform
 import os
 import glob
 import os.path
@@ -7,7 +6,6 @@ import shutil
 import subprocess
 import xml.etree.ElementTree
 
-host_os = platform.system().lower()
 
 def packmanExt():
     if sys.platform == 'win32':
@@ -22,12 +20,12 @@ def cmakeExt():
 
 
 def filterPreset(presetName):
-    winPresetFilter = ['win','uwp','ps4','switch','xboxone','android','crosscompile','xboxseriesx', 'emscripten', 'openharmony']
+    winPresetFilter = ['win','uwp','ps4','switch','xboxone','android','crosscompile','xboxseriesx', 'emscripten']
     if sys.platform == 'win32':        
         if any(presetName.find(elem) != -1 for elem in winPresetFilter):
             return True
-    else:
-        if any(presetName.find(elem) == -1 for elem in winPresetFilter):
+    else:        
+        if all(presetName.find(elem) == -1 for elem in winPresetFilter):
             return True
     return False
 
@@ -122,8 +120,6 @@ class CMakePreset:
             return False
         elif self.targetPlatform == 'android':
             return False
-        elif self.targetPlatform == 'openharmony':
-            return False
         if self.targetPlatform == 'emscripten':
             return False
         return True
@@ -165,10 +161,8 @@ class CMakePreset:
             outString = outString + '-G \"Visual Studio 16 2019\"'
         elif self.compiler == 'xcode':
             outString = outString + '-G Xcode'
-        elif self.targetPlatform == 'openharmony':
-            outString = outString + '-G \"Ninja\"'
         elif self.targetPlatform == 'android':
-            outString = outString + '-G \"Unix Makefiles\"'
+            outString = outString + '-G \"MinGW Makefiles\"'
         elif self.targetPlatform == 'linux':
             outString = outString + '-G \"Unix Makefiles\"'
         elif self.targetPlatform == 'linuxAarch64':
@@ -280,10 +274,9 @@ class CMakePreset:
         elif self.targetPlatform == 'android':
             outString = outString + ' -DTARGET_BUILD_PLATFORM=android'
             outString = outString + ' -DCMAKE_TOOLCHAIN_FILE=' + \
-                os.environ['PM_AndroidNDK_PATH'] + '/build/cmake/android.toolchain.cmake'
-                # os.environ['PM_CMakeModules_PATH'] + \
-                # '/android/android.toolchain.cmake'
-            # outString = outString + ' -DANDROID_STL=\"gnustl_static\"'
+                os.environ['PM_CMakeModules_PATH'] + \
+                '/android/android.toolchain.cmake'
+            outString = outString + ' -DANDROID_STL=\"gnustl_static\"'
             outString = outString + ' -DCM_ANDROID_FP=\"softfp\"'
             if os.environ.get('PM_AndroidNDK_PATH') is None:
                 print('Please provide path to android NDK in variable PM_AndroidNDK_PATH.')
@@ -292,21 +285,7 @@ class CMakePreset:
                 outString = outString + ' -DANDROID_NDK=' + \
                     os.environ['PM_AndroidNDK_PATH']
                 outString = outString + ' -DCMAKE_MAKE_PROGRAM=\"' + \
-                    os.environ['PM_AndroidNDK_PATH'] + '/prebuilt/' + host_os + '-x86_64/bin/make\"'
-            return outString
-        elif self.targetPlatform == 'openharmony':
-            outString = outString + ' -DTARGET_BUILD_PLATFORM=openharmony'
-            outString = outString + ' -DCMAKE_TOOLCHAIN_FILE=' + \
-                os.environ['PM_OpenHarmonyNDK_PATH'] + '/build/cmake/ohos.toolchain.cmake'
-            outString = outString + ' -DCM_ANDROID_FP=\"softfp\"'
-            if os.environ.get('PM_OpenHarmonyNDK_PATH') is None:
-                print('Please provide path to OpenHarmony NDK in variable PM_OpenHarmonyNDK_PATH. like  : E:\\work\\harmonyos_data\\ohos_sdk\\native\\3.2.5.5')
-                exit(-1)
-            else:
-                outString = outString + ' -DANDROID_NDK=' + \
-                    os.environ['PM_OpenHarmonyNDK_PATH']
-                outString = outString + ' -DCMAKE_MAKE_PROGRAM=\"' + \
-                    os.environ['PM_OpenHarmonyNDK_PATH'] + '/build-tools/cmake/bin/ninja\"'
+                    os.environ['PM_AndroidNDK_PATH'] + '\\prebuilt\\windows\\bin\\make.exe\"'
             return outString
         elif self.targetPlatform == 'linux':
             outString = outString + ' -DTARGET_BUILD_PLATFORM=linux'
@@ -338,15 +317,14 @@ class CMakePreset:
                     '/linux/LinuxAarch64.cmake\"'
             return outString
         elif self.targetPlatform == 'mac64':
-            outString = outString + ' -DTARGET_BUILD_PLATFORM=mac -DCMAKE_OSX_DEPLOYMENT_TARGET=\"10.9\"'
-            # outString = outString + ' -DPX_OUTPUT_ARCH=x86'
+            outString = outString + ' -DTARGET_BUILD_PLATFORM=mac'
+            outString = outString + ' -DPX_OUTPUT_ARCH=x86'
             return outString
         elif self.targetPlatform == 'ios64':
-            print('iOSPlatform=' + iOSPlatform)
             outString = outString + ' -DTARGET_BUILD_PLATFORM=ios'
             outString = outString + ' -DCMAKE_TOOLCHAIN_FILE=\"' + \
                 os.environ['PM_CMakeModules_PATH'] + '/ios/ios.toolchain.cmake\"'
-            outString = outString + ' -DPX_OUTPUT_ARCH=arm -DPLATFORM=' + iOSPlatform
+            outString = outString + ' -DPX_OUTPUT_ARCH=arm'
             return outString
         elif self.targetPlatform == 'emscripten':
             outString = outString + '-G \"Ninja\"'
@@ -398,7 +376,7 @@ def presetProvided(pName):
     cmakeParams = cmakeParams + ' ' + getCommonParams()
     cmakeParams = cmakeParams + ' ' + parsedPreset.getCMakeSwitches()
     cmakeParams = cmakeParams + ' ' + parsedPreset.getCMakeParams()
-    print(cmakeParams)
+    # print(cmakeParams)
 
     if os.path.isfile(os.environ['PHYSX_ROOT_DIR'] + '/compiler/internal/CMakeLists.txt'):
         cmakeMasterDir = 'internal'
@@ -410,7 +388,7 @@ def presetProvided(pName):
         cleanupCompilerDir(outputDir)
 
         # run the cmake script
-        print('[MultiConfig] Cmake params:' + cmakeParams + ', cmakeMasterDir=' + cmakeMasterDir)
+        #print('Cmake params:' + cmakeParams)
         os.chdir(os.path.join(os.environ['PHYSX_ROOT_DIR'], outputDir))
         os.system(cmakeExec + ' \"' +
                   os.environ['PHYSX_ROOT_DIR'] + '/compiler/' + cmakeMasterDir + '\"' + cmakeParams)
@@ -423,17 +401,17 @@ def presetProvided(pName):
             cleanupCompilerDir(outputDir)
 
             # run the cmake script
-            print('Cmake params:' + cmakeParams)
+            #print('Cmake params:' + cmakeParams)
             os.chdir(os.path.join(os.environ['PHYSX_ROOT_DIR'], outputDir))
-            print(cmakeExec + ' \"' + os.environ['PHYSX_ROOT_DIR'] + '/compiler/' + cmakeMasterDir + '\"' + cmakeParams + ' -DCMAKE_BUILD_TYPE=' + config)
+            # print(cmakeExec + ' \"' + os.environ['PHYSX_ROOT_DIR'] + '/compiler/' + cmakeMasterDir + '\"' + cmakeParams + ' -DCMAKE_BUILD_TYPE=' + config)
             os.system(cmakeExec + ' \"' + os.environ['PHYSX_ROOT_DIR'] + '/compiler/' +
-                      cmakeMasterDir + '\"' + cmakeParams + ' -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -DCMAKE_BUILD_TYPE=' + config)
+                      cmakeMasterDir + '\"' + cmakeParams + ' -DCMAKE_BUILD_TYPE=' + config)
             os.chdir(os.environ['PHYSX_ROOT_DIR'])
     pass
 
 
 def main():
-    if len(sys.argv) < 2:
+    if len(sys.argv) != 2:
         presetName = noPresetProvided()
         os.chdir(os.environ['PHYSX_ROOT_DIR'])
         if sys.platform == 'win32':
@@ -442,10 +420,6 @@ def main():
             os.system('./generate_projects.sh ' + presetName)
     else:
         presetName = sys.argv[1]
-        global iOSPlatform
-        if len(sys.argv) > 2:
-            iOSPlatform = sys.argv[2]
-
         if filterPreset(presetName):
             presetProvided(presetName)
         else:
